@@ -18,10 +18,10 @@ The client type MUST provide traits Hash, Eq and Clone.
 
 SubMap supports the following masks:
 
-this/is/a/topic - single topic subscription
-this/?/a/topic - all topics which match the pattern and have any 2nd chunk
-this/is/\* - all subtopics of "this/is"
-\* - all topics
+* this/is/a/topic - single topic subscription
+* this/?/a/topic - all topics which match the pattern and have any 2nd chunk
+* this/is/\* - all subtopics of "this/is"
+* \* - all topics
 
 Service symbols can be changed. E.g. let us create a subscription map with
 MQTT-style wildcards (+ for ? and # for \*) but with the dot as the subtopic
