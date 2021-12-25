@@ -1,6 +1,6 @@
 # submap
 
-B-Tree map for pub/sub services.
+B-tree map for pub/sub services.
 
 ## Create a new subscription map
 
