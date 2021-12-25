@@ -244,7 +244,7 @@ mod test {
     use super::SubMap;
     #[test]
     fn test_sub() {
-        let mut smap = SubMap::new().match_any("+").wildcard("#");
+        let mut smap = SubMap::<String>::new().match_any("+").wildcard("#");
         let client = "test".to_owned();
         assert!(smap.register_client(&client));
         assert!(smap.subscribe("unit/tests/test1", &client));
