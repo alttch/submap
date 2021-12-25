@@ -24,7 +24,7 @@ this/is/\** - all subtopics of "this/is"
 \* - all topics
 
 Service symbols can be changed. E.g. let us create a subscription map with
-MQTT-style wildcards (+ for ? and # for \*) but with dot as the subtopic
+MQTT-style wildcards (+ for ? and # for \*) but with the dot as the subtopic
 separator:
 
 ```rust
