@@ -20,7 +20,7 @@ SubMap supports the following masks:
 
 this/is/a/topic - single topic subscription
 this/?/a/topic - all topics which match the pattern and have any 2nd chunk
-this/is/\** - all subtopics of "this/is"
+this/is/\* - all subtopics of "this/is"
 \* - all topics
 
 Service symbols can be changed. E.g. let us create a subscription map with
