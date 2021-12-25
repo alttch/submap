@@ -43,3 +43,7 @@ subscribe/unsubscribe. Use "register_client" function for this.
 
 When "unregister_client" is called, it also automatically unsubscribes the
 client from all the subscribed topics.
+
+## Cargo crate
+
+<https://crates.io/crates/submap>
