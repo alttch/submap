@@ -19,7 +19,7 @@ The client type MUST provide traits Hash, Eq and Clone.
 SubMap supports the following masks:
 
 * this/is/a/topic - single topic subscription
-* this/?/a/topic - all topics which match the pattern and have any 2nd chunk
+* this/?/a/topic - all topics which match the pattern (2nd chunk - any value)
 * this/is/\* - all subtopics of "this/is"
 * \* - all topics
 
