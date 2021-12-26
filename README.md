@@ -2,7 +2,9 @@
 
 B-tree map for pub/sub services.
 
-## Create a new subscription map
+## Subscription map
+
+### Usage
 
 ```rust
 let mut smap: SubMap<Client> = SubMap::new();
@@ -13,6 +15,12 @@ structure which contains a channel or locked socket or anything else, required
 to work with the client.
 
 The client type MUST provide traits Hash, Eq and Clone.
+
+All clients must be registered in the map, before they can
+subscribe/unsubscribe. Use "register\_client" function for this.
+
+When "unregister\_client" is called, it also automatically unsubscribes the
+client from all the subscribed topics.
 
 ## Separators and wildcards
 
@@ -36,13 +44,17 @@ Note that "/topic/x", "topic/x" and "topic//x" are 3 different topics. If
 any kind of normalization is required, it should be done manually, before
 calling SubMap functions.
 
-## Usage
+## Broadcast map
 
-All clients must be registered in the map, before they can
-subscribe/unsubscribe. Use "register_client" function for this.
+```rust
+let mut bmap: BroadcastMap<Client> = BroadcastMap::new();
+```
 
-When "unregister_client" is called, it also automatically unsubscribes the
-client from all the subscribed topics.
+Does the opposite job - clients are registered with regular names, while
+"get\_clients\_by\_mask" function returns clients, which match the mask.
+
+### Usage
+
 
 ## Cargo crate
 
