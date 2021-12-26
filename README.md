@@ -22,7 +22,7 @@ subscribe/unsubscribe. Use "register\_client" function for this.
 When "unregister\_client" is called, it also automatically unsubscribes the
 client from all the subscribed topics.
 
-## Separators and wildcards
+### Separators and wildcards
 
 SubMap supports the following masks:
 
