@@ -53,6 +53,8 @@ let mut bmap: BroadcastMap<Client> = BroadcastMap::new();
 Does the opposite job - clients are registered with regular names, while
 "get\_clients\_by\_mask" function returns clients, which match the mask.
 
+Note: the default separator is dot.
+
 ### Usage
 
 
