@@ -73,6 +73,10 @@ where
         self.match_any = match_any.to_owned();
         self
     }
+    #[inline]
+    pub fn list_clients(&self) -> Vec<C> {
+        self.subscribed_topics.keys().cloned().collect()
+    }
     pub fn register_client(&mut self, client: &C) -> bool {
         if self.subscribed_topics.contains_key(client) {
             false
@@ -99,7 +103,6 @@ where
             false
         }
     }
-
     pub fn subscribe(&mut self, topic: &str, client: &C) -> bool {
         self.subscribed_topics
             .get_mut(client)
@@ -118,7 +121,6 @@ where
                 true
             })
     }
-
     pub fn unsubscribe(&mut self, topic: &str, client: &C) -> bool {
         self.subscribed_topics
             .get_mut(client)
@@ -137,7 +139,6 @@ where
                 true
             })
     }
-
     pub fn get_subscribers(&self, topic: &str) -> HashSet<C> {
         let mut result = HashSet::new();
         get_subscribers_rec(
