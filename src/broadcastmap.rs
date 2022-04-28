@@ -68,11 +68,11 @@ where
     }
     #[inline]
     pub fn register_client(&mut self, name: &str, client: &C) {
-        register_broadcast_client_rec(&mut self.broadcasts, name.split(self.separator), client)
+        register_broadcast_client_rec(&mut self.broadcasts, name.split(self.separator), client);
     }
     #[inline]
     pub fn unregister_client(&mut self, name: &str, client: &C) {
-        unregister_broadcast_client_rec(&mut self.broadcasts, name.split(self.separator), client)
+        unregister_broadcast_client_rec(&mut self.broadcasts, name.split(self.separator), client);
     }
     pub fn get_clients_by_mask(&self, mask: &str) -> HashSet<C> {
         let mut result = HashSet::new();
@@ -98,19 +98,16 @@ fn get_broadcast_clients_rec<C>(
 {
     if let Some(chunk) = sp.next() {
         if chunk == wildcard {
-            result.extend(broadcast.members_wildcard.clone())
+            result.extend(broadcast.members_wildcard.clone());
         } else if chunk == match_any {
             if let Some(ref child) = broadcast.childs_any {
                 get_broadcast_clients_rec(child, sp, result, wildcard, match_any);
             }
-        } else {
-            broadcast
-                .childs
-                .get(chunk)
-                .map(|child| get_broadcast_clients_rec(child, sp, result, wildcard, match_any));
+        } else if let Some(child) = broadcast.childs.get(chunk) {
+            get_broadcast_clients_rec(child, sp, result, wildcard, match_any);
         }
     } else {
-        result.extend(broadcast.members.clone())
+        result.extend(broadcast.members.clone());
     }
 }
 
