@@ -55,6 +55,15 @@ Does the opposite job - clients are registered with regular names, while
 
 Note: the default separator is dot.
 
+## ACL map
+
+```rust
+let mut acl_map = AclMap::new();
+```
+
+SubMap-based high-speed access control lists checker. Uses SubMap algorithm
+with a single unit "client" to verify various access control lists.
+
 ### Usage
 
 

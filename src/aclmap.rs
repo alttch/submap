@@ -35,4 +35,8 @@ impl AclMap {
     pub fn matches(&self, topic: &str) -> bool {
         self.smap.is_subscribed(topic)
     }
+    #[inline]
+    pub fn list(&self) -> Vec<&str> {
+        self.smap.list_topics(&())
+    }
 }

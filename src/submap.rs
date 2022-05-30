@@ -81,6 +81,14 @@ where
     pub fn list_clients(&self) -> Vec<C> {
         self.subscribed_topics.keys().cloned().collect()
     }
+    #[inline]
+    pub fn list_topics(&self, client: &C) -> Vec<&str> {
+        if let Some(topics) = self.subscribed_topics.get(client) {
+            topics.iter().map(String::as_str).collect()
+        } else {
+            Vec::new()
+        }
+    }
     pub fn register_client(&mut self, client: &C) -> bool {
         if self.subscribed_topics.contains_key(client) {
             false
