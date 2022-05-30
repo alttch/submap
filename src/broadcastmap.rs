@@ -32,8 +32,8 @@ impl<C> Default for Broadcast<C> {
 pub struct BroadcastMap<C> {
     broadcasts: Broadcast<C>,
     separator: char,
-    match_any: String,
-    wildcard: String,
+    match_any: HashSet<String>,
+    wildcard: HashSet<String>,
 }
 
 impl<C> Default for BroadcastMap<C> {
@@ -41,8 +41,8 @@ impl<C> Default for BroadcastMap<C> {
         Self {
             broadcasts: Broadcast::default(),
             separator: '.',
-            match_any: "?".to_owned(),
-            wildcard: "*".to_owned(),
+            match_any: vec!["?".to_owned()].into_iter().collect(),
+            wildcard: vec!["*".to_owned()].into_iter().collect(),
         }
     }
 }
@@ -61,13 +61,23 @@ where
         self
     }
     #[inline]
-    pub fn match_any(mut self, match_any: &str) -> Self {
-        self.match_any = match_any.to_owned();
+    pub fn wildcard(mut self, wildcard: &str) -> Self {
+        self.wildcard = vec![wildcard.to_owned()].into_iter().collect();
         self
     }
     #[inline]
-    pub fn wildcard(mut self, wildcard: &str) -> Self {
-        self.wildcard = wildcard.to_owned();
+    pub fn match_any(mut self, match_any: &str) -> Self {
+        self.match_any = vec![match_any.to_owned()].into_iter().collect();
+        self
+    }
+    #[inline]
+    pub fn wildcard_multiple(mut self, wildcard_multiple: &[&str]) -> Self {
+        self.wildcard = wildcard_multiple.iter().map(|&v| v.to_owned()).collect();
+        self
+    }
+    #[inline]
+    pub fn match_any_multiple(mut self, match_any_multiple: &[&str]) -> Self {
+        self.match_any = match_any_multiple.iter().map(|&v| v.to_owned()).collect();
         self
     }
     #[inline]
@@ -95,15 +105,15 @@ fn get_broadcast_clients_rec<C>(
     broadcast: &Broadcast<C>,
     mut sp: Split<char>,
     result: &mut HashSet<C>,
-    wildcard: &str,
-    match_any: &str,
+    wildcard: &HashSet<String>,
+    match_any: &HashSet<String>,
 ) where
     C: Hash + Eq + Clone,
 {
     if let Some(chunk) = sp.next() {
-        if chunk == wildcard {
+        if wildcard.contains(chunk) {
             result.extend(broadcast.members_wildcard.clone());
-        } else if chunk == match_any {
+        } else if match_any.contains(chunk) {
             if let Some(ref child) = broadcast.childs_any {
                 get_broadcast_clients_rec(child, sp, result, wildcard, match_any);
             }

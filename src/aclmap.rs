@@ -28,6 +28,16 @@ impl AclMap {
         self
     }
     #[inline]
+    pub fn wildcard_multiple(mut self, wildcard_multiple: &[&str]) -> Self {
+        self.smap = self.smap.wildcard_multiple(wildcard_multiple);
+        self
+    }
+    #[inline]
+    pub fn match_any_multiple(mut self, match_any_multiple: &[&str]) -> Self {
+        self.smap = self.smap.match_any_multiple(match_any_multiple);
+        self
+    }
+    #[inline]
     pub fn set(&mut self, topic: &str) {
         self.smap.subscribe(topic, &());
     }
