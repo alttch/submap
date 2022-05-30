@@ -1,6 +1,6 @@
 use crate::submap::SubMap;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct AclMap {
     smap: SubMap<()>,
 }

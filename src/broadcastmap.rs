@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::str::Split;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Broadcast<C> {
     childs: HashMap<String, Broadcast<C>>,
     childs_any: Option<Box<Broadcast<C>>>,
@@ -28,7 +28,7 @@ impl<C> Default for Broadcast<C> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BroadcastMap<C> {
     broadcasts: Broadcast<C>,
     separator: char,

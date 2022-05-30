@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::str::Split;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Subscription<C> {
     subscribers: HashSet<C>,
     subtopics: HashMap<String, Subscription<C>>,
@@ -31,7 +31,7 @@ impl<C> Subscription<C> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SubMap<C> {
     subscriptions: Subscription<C>,
     subscribed_topics: HashMap<C, HashSet<String>>,
@@ -267,10 +267,8 @@ where
                 return true;
             }
         }
-    } else {
-        if !subscription.subscribers.is_empty() {
-            return true;
-        }
+    } else if !subscription.subscribers.is_empty() {
+        return true;
     }
     false
 }
