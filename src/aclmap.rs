@@ -38,7 +38,7 @@ impl AclMap {
         self
     }
     #[inline]
-    pub fn set(&mut self, topic: &str) {
+    pub fn insert(&mut self, topic: &str) {
         self.smap.subscribe(topic, &());
     }
     #[inline]
