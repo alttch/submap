@@ -51,17 +51,21 @@ impl<C> BroadcastMap<C>
 where
     C: Hash + Eq + Clone,
 {
+    #[inline]
     pub fn new() -> Self {
         Self::default()
     }
+    #[inline]
     pub fn separator(mut self, separator: char) -> Self {
         self.separator = separator;
         self
     }
+    #[inline]
     pub fn match_any(mut self, match_any: &str) -> Self {
         self.match_any = match_any.to_owned();
         self
     }
+    #[inline]
     pub fn wildcard(mut self, wildcard: &str) -> Self {
         self.wildcard = wildcard.to_owned();
         self

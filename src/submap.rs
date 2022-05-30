@@ -58,17 +58,21 @@ impl<C> SubMap<C>
 where
     C: Hash + Eq + Clone,
 {
+    #[inline]
     pub fn new() -> Self {
         Self::default()
     }
+    #[inline]
     pub fn separator(mut self, separator: char) -> Self {
         self.separator = separator;
         self
     }
+    #[inline]
     pub fn wildcard(mut self, wildcard: &str) -> Self {
         self.wildcard = wildcard.to_owned();
         self
     }
+    #[inline]
     pub fn match_any(mut self, match_any: &str) -> Self {
         self.match_any = match_any.to_owned();
         self
@@ -139,6 +143,7 @@ where
                 true
             })
     }
+    #[inline]
     pub fn get_subscribers(&self, topic: &str) -> HashSet<C> {
         let mut result = HashSet::new();
         get_subscribers_rec(
@@ -147,6 +152,10 @@ where
             &mut result,
         );
         result
+    }
+    #[inline]
+    pub fn is_subscribed(&self, topic: &str) -> bool {
+        is_subscribed_rec(&self.subscriptions, topic.split(self.separator))
     }
     #[inline]
     pub fn subscription_count(&self) -> usize {
@@ -238,6 +247,32 @@ fn get_subscribers_rec<C>(
     } else {
         result.extend(subscription.subscribers.clone());
     }
+}
+
+fn is_subscribed_rec<C>(subscription: &Subscription<C>, mut sp: Split<char>) -> bool
+where
+    C: Hash + Eq + Clone,
+{
+    if let Some(topic) = sp.next() {
+        if !subscription.sub_any.is_empty() {
+            return true;
+        }
+        if let Some(sub) = subscription.subtopics.get(topic) {
+            if is_subscribed_rec(sub, sp.clone()) {
+                return true;
+            }
+        }
+        if let Some(ref sub) = subscription.subtopics_any {
+            if is_subscribed_rec(sub, sp) {
+                return true;
+            }
+        }
+    } else {
+        if !subscription.subscribers.is_empty() {
+            return true;
+        }
+    }
+    false
 }
 
 #[cfg(test)]
