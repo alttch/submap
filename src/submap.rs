@@ -99,6 +99,10 @@ where
             Vec::new()
         }
     }
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.subscribed_topics.is_empty()
+    }
     pub fn register_client(&mut self, client: &C) -> bool {
         if self.subscribed_topics.contains_key(client) {
             false

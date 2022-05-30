@@ -49,4 +49,8 @@ impl AclMap {
     pub fn list(&self) -> Vec<&str> {
         self.smap.list_topics(&())
     }
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.smap.is_empty()
+    }
 }

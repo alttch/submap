@@ -81,6 +81,10 @@ where
         self
     }
     #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.broadcasts.is_empty()
+    }
+    #[inline]
     pub fn register_client(&mut self, name: &str, client: &C) {
         register_broadcast_client_rec(&mut self.broadcasts, name.split(self.separator), client);
     }
