@@ -6,7 +6,7 @@ B-tree map for pub/sub services.
 
 ### Usage
 
-```rust
+```rust,ignore
 let mut smap: SubMap<Client> = SubMap::new();
 ```
 
@@ -35,7 +35,7 @@ Service symbols can be changed. E.g. let us create a subscription map with
 MQTT-style wildcards (+ for ? and # for \*) but with the dot as the subtopic
 separator:
 
-```rust
+```rust,ignore
 let mut smap: SubMap<Client> =
     SubMap::new().separator('.').match_any("+").wildcard("#");
 ```
@@ -46,7 +46,7 @@ calling SubMap functions.
 
 ## Broadcast map
 
-```rust
+```rust,ignore
 let mut bmap: BroadcastMap<Client> = BroadcastMap::new();
 ```
 
@@ -57,7 +57,7 @@ Note: the default separator is dot.
 
 ## ACL map
 
-```rust
+```rust,ignore
 let mut acl_map = AclMap::new();
 ```
 
