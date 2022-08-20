@@ -1,6 +1,6 @@
 [package]
 name = "submap"
-version = "0.1.8"
+version = "0.2.1"
 edition = "2021"
 authors = ["Sergei S. <div@altertech.com>"]
 license = "Apache-2.0"
@@ -9,4 +9,14 @@ description = "B-Tree map for pub/sub services"
 readme = "README.md"
 keywords = ["pubsub", "subscription", "b-tree", "btree", "map"]
 
+[package.metadata.docs.rs]
+features = ["digest"]
+
+[package.metadata.playground]
+features = ["digest"]
+
 [dependencies]
+sha2 = { version = "0.10.1", optional = true }
+
+[features]
+digest = ["sha2"]

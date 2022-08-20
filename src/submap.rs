@@ -1,13 +1,12 @@
-use std::collections::{HashMap, HashSet};
-use std::hash::Hash;
+use std::collections::{BTreeMap, BTreeSet};
 use std::str::Split;
 
 #[derive(Debug, Clone)]
 struct Subscription<C> {
-    subscribers: HashSet<C>,
-    subtopics: HashMap<String, Subscription<C>>,
+    subscribers: BTreeSet<C>,
+    subtopics: BTreeMap<String, Subscription<C>>,
     subtopics_any: Option<Box<Subscription<C>>>, // ?
-    sub_any: HashSet<C>,                         // *
+    sub_any: BTreeSet<C>,                        // *
 }
 
 impl<C> Default for Subscription<C> {
@@ -34,11 +33,11 @@ impl<C> Subscription<C> {
 #[derive(Debug, Clone)]
 pub struct SubMap<C> {
     subscriptions: Subscription<C>,
-    subscribed_topics: HashMap<C, HashSet<String>>,
+    subscribed_topics: BTreeMap<C, BTreeSet<String>>,
     subscription_count: usize,
     separator: char,
-    match_any: HashSet<String>,
-    wildcard: HashSet<String>,
+    match_any: BTreeSet<String>,
+    wildcard: BTreeSet<String>,
 }
 
 impl<C> Default for SubMap<C> {
@@ -56,7 +55,7 @@ impl<C> Default for SubMap<C> {
 
 impl<C> SubMap<C>
 where
-    C: Hash + Eq + Clone,
+    C: Ord + Eq + Clone,
 {
     #[inline]
     pub fn new() -> Self {
@@ -108,7 +107,7 @@ where
             false
         } else {
             self.subscribed_topics
-                .insert(client.clone(), HashSet::new());
+                .insert(client.clone(), BTreeSet::new());
             true
         }
     }
@@ -166,8 +165,8 @@ where
             })
     }
     #[inline]
-    pub fn get_subscribers(&self, topic: &str) -> HashSet<C> {
-        let mut result = HashSet::new();
+    pub fn get_subscribers(&self, topic: &str) -> BTreeSet<C> {
+        let mut result = BTreeSet::new();
         get_subscribers_rec(
             &self.subscriptions,
             topic.split(self.separator),
@@ -193,10 +192,10 @@ fn subscribe_rec<C>(
     subscription: &mut Subscription<C>,
     mut sp: Split<char>,
     client: &C,
-    wildcard: &HashSet<String>,
-    match_any: &HashSet<String>,
+    wildcard: &BTreeSet<String>,
+    match_any: &BTreeSet<String>,
 ) where
-    C: Hash + Eq + Clone,
+    C: Ord + Eq + Clone,
 {
     if let Some(topic) = sp.next() {
         if wildcard.contains(topic) {
@@ -225,10 +224,10 @@ fn unsubscribe_rec<C>(
     subscription: &mut Subscription<C>,
     mut sp: Split<char>,
     client: &C,
-    wildcard: &HashSet<String>,
-    match_any: &HashSet<String>,
+    wildcard: &BTreeSet<String>,
+    match_any: &BTreeSet<String>,
 ) where
-    C: Hash + Eq,
+    C: Ord + Eq,
 {
     if let Some(topic) = sp.next() {
         if wildcard.contains(topic) {
@@ -254,9 +253,9 @@ fn unsubscribe_rec<C>(
 fn get_subscribers_rec<C>(
     subscription: &Subscription<C>,
     mut sp: Split<char>,
-    result: &mut HashSet<C>,
+    result: &mut BTreeSet<C>,
 ) where
-    C: Hash + Eq + Clone,
+    C: Ord + Eq + Clone,
 {
     if let Some(topic) = sp.next() {
         result.extend(subscription.sub_any.clone());
@@ -273,7 +272,7 @@ fn get_subscribers_rec<C>(
 
 fn is_subscribed_rec<C>(subscription: &Subscription<C>, mut sp: Split<char>) -> bool
 where
-    C: Hash + Eq + Clone,
+    C: Ord + Eq + Clone,
 {
     if let Some(topic) = sp.next() {
         if !subscription.sub_any.is_empty() {

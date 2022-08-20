@@ -14,7 +14,7 @@ where "Client" is a pub/sub client type, which is usually either a channel or a
 structure which contains a channel or locked socket or anything else, required
 to work with the client.
 
-The client type MUST provide traits Hash, Eq and Clone.
+The client type MUST provide traits Ord, Eq and Clone.
 
 All clients must be registered in the map, before they can
 subscribe/unsubscribe. Use "register\_client" function for this.
