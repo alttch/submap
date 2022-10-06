@@ -10,3 +10,7 @@ pub use crate::aclmap::AclMap;
 
 #[cfg(feature = "digest")]
 pub mod digest;
+
+#[cfg(feature = "native-digest")]
+#[path = "native_digest.rs"]
+pub mod digest;

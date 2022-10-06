@@ -1,6 +1,6 @@
 [package]
 name = "submap"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2021"
 authors = ["Sergei S. <div@altertech.com>"]
 license = "Apache-2.0"
@@ -17,6 +17,9 @@ features = ["digest"]
 
 [dependencies]
 sha2 = { version = "0.10.1", optional = true }
+openssl = { version = "0.10.42", optional = true }
 
 [features]
 digest = ["sha2"]
+native-digest = ["openssl"]
+openssl-vendored = ["openssl/vendored"]
