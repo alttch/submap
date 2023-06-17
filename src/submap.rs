@@ -165,8 +165,8 @@ where
             })
     }
     pub fn unsubscribe_all(&mut self, client: &C) -> bool {
-        if let Some(client_topics) = self.subscribed_topics.get(client) {
-            for topic in client_topics {
+        if let Some(client_topics) = self.subscribed_topics.get_mut(client) {
+            for topic in client_topics.iter() {
                 unsubscribe_rec(
                     &mut self.subscriptions,
                     topic.split(self.separator),
@@ -176,6 +176,7 @@ where
                 );
                 self.subscription_count -= 1;
             }
+            client_topics.clear();
             true
         } else {
             false
