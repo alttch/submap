@@ -164,6 +164,23 @@ where
                 true
             })
     }
+    pub fn unsubscribe_all(&mut self, client: &C) -> bool {
+        if let Some(client_topics) = self.subscribed_topics.get(client) {
+            for topic in client_topics {
+                unsubscribe_rec(
+                    &mut self.subscriptions,
+                    topic.split(self.separator),
+                    client,
+                    &self.wildcard,
+                    &self.match_any,
+                );
+                self.subscription_count -= 1;
+            }
+            true
+        } else {
+            false
+        }
+    }
     #[inline]
     pub fn get_subscribers(&self, topic: &str) -> BTreeSet<C> {
         let mut result = BTreeSet::new();
