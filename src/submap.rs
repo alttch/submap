@@ -194,7 +194,7 @@ where
     }
     #[inline]
     pub fn is_subscribed(&self, topic: &str) -> bool {
-        is_subscribed_rec(&self.subscriptions, topic.split(self.separator))
+        is_subscribed_rec(&self.subscriptions, &mut topic.split(self.separator))
     }
     #[inline]
     pub fn subscription_count(&self) -> usize {
@@ -288,7 +288,7 @@ fn get_subscribers_rec<C>(
     }
 }
 
-fn is_subscribed_rec<C>(subscription: &Subscription<C>, mut sp: Split<char>) -> bool
+fn is_subscribed_rec<C>(subscription: &Subscription<C>, sp: &mut Split<char>) -> bool
 where
     C: Ord + Eq + Clone,
 {
@@ -297,7 +297,7 @@ where
             return true;
         }
         if let Some(sub) = subscription.subtopics.get(topic) {
-            if is_subscribed_rec(sub, sp.clone()) {
+            if is_subscribed_rec(sub, sp) {
                 return true;
             }
         }
