@@ -1,12 +1,14 @@
-use std::collections::{BTreeMap, BTreeSet};
 use std::str::Split;
+
+#[allow(clippy::wildcard_imports)]
+use crate::types::*;
 
 #[derive(Debug, Clone)]
 struct Broadcast<C> {
-    childs: BTreeMap<String, Broadcast<C>>,
+    childs: Map<String, Broadcast<C>>,
     childs_any: Option<Box<Broadcast<C>>>,
-    members: BTreeSet<C>,
-    members_wildcard: BTreeSet<C>,
+    members: Set<C>,
+    members_wildcard: Set<C>,
 }
 
 impl<C> Broadcast<C> {
@@ -31,8 +33,8 @@ impl<C> Default for Broadcast<C> {
 pub struct BroadcastMap<C> {
     broadcasts: Broadcast<C>,
     separator: char,
-    match_any: BTreeSet<String>,
-    wildcard: BTreeSet<String>,
+    match_any: Set<String>,
+    wildcard: Set<String>,
 }
 
 impl<C> Default for BroadcastMap<C> {
@@ -48,7 +50,7 @@ impl<C> Default for BroadcastMap<C> {
 
 impl<C> BroadcastMap<C>
 where
-    C: Ord + Eq + Clone,
+    C: Client,
 {
     #[inline]
     pub fn new() -> Self {
@@ -91,8 +93,8 @@ where
     pub fn unregister_client(&mut self, name: &str, client: &C) {
         unregister_broadcast_client_rec(&mut self.broadcasts, name.split(self.separator), client);
     }
-    pub fn get_clients_by_mask(&self, mask: &str) -> BTreeSet<C> {
-        let mut result = BTreeSet::new();
+    pub fn get_clients_by_mask(&self, mask: &str) -> Set<C> {
+        let mut result = Set::new();
         get_broadcast_clients_rec(
             &self.broadcasts,
             mask.split(self.separator),
@@ -107,11 +109,11 @@ where
 fn get_broadcast_clients_rec<C>(
     broadcast: &Broadcast<C>,
     mut sp: Split<char>,
-    result: &mut BTreeSet<C>,
-    wildcard: &BTreeSet<String>,
-    match_any: &BTreeSet<String>,
+    result: &mut Set<C>,
+    wildcard: &Set<String>,
+    match_any: &Set<String>,
 ) where
-    C: Ord + Eq + Clone,
+    C: Client,
 {
     if let Some(chunk) = sp.next() {
         if wildcard.contains(chunk) {
@@ -130,7 +132,7 @@ fn get_broadcast_clients_rec<C>(
 
 fn register_broadcast_client_rec<C>(broadcast: &mut Broadcast<C>, mut sp: Split<char>, client: &C)
 where
-    C: Ord + Eq + Clone,
+    C: Client,
 {
     if let Some(chunk) = sp.next() {
         broadcast.members_wildcard.insert(client.clone());
@@ -155,7 +157,7 @@ where
 
 fn unregister_broadcast_client_rec<C>(broadcast: &mut Broadcast<C>, mut sp: Split<char>, client: &C)
 where
-    C: Ord + Eq + Clone,
+    C: Client,
 {
     if let Some(chunk) = sp.next() {
         broadcast.members_wildcard.remove(client);

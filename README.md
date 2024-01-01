@@ -64,8 +64,19 @@ let mut acl_map = AclMap::new();
 SubMap-based high-speed access control lists checker. Uses SubMap algorithm
 with a single unit "client" to verify various access control lists.
 
-### Usage
+### Crate features
 
+* **indexmap** switches the engine to *indexmap* (the default is based on
+*std::collections::BTreeMap/BTreeSet*), requires Hash trait implemented for map
+clients.
+
+The current engine can be obtained from
+
+```rust
+use submap::types::ENGINE;
+
+dbg!(ENGINE); // std-btree or indexmap
+```
 
 ## Cargo crate
 

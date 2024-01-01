@@ -1,13 +1,14 @@
-use indexmap::{IndexMap, IndexSet};
-use std::hash::Hash;
 use std::str::Split;
+
+#[allow(clippy::wildcard_imports)]
+use crate::types::*;
 
 #[derive(Debug, Clone)]
 struct Subscription<C> {
-    subscribers: IndexSet<C>,
-    subtopics: IndexMap<String, Subscription<C>>,
+    subscribers: Set<C>,
+    subtopics: Map<String, Subscription<C>>,
     subtopics_any: Option<Box<Subscription<C>>>, // ?
-    sub_any: IndexSet<C>,                        // *
+    sub_any: Set<C>,                             // *
 }
 
 impl<C> Default for Subscription<C> {
@@ -34,11 +35,11 @@ impl<C> Subscription<C> {
 #[derive(Debug, Clone)]
 pub struct SubMap<C> {
     subscriptions: Subscription<C>,
-    subscribed_topics: IndexMap<C, IndexSet<String>>,
+    subscribed_topics: Map<C, Set<String>>,
     subscription_count: usize,
     separator: char,
-    match_any: IndexSet<String>,
-    wildcard: IndexSet<String>,
+    match_any: Set<String>,
+    wildcard: Set<String>,
 }
 
 impl<C> Default for SubMap<C> {
@@ -56,7 +57,7 @@ impl<C> Default for SubMap<C> {
 
 impl<C> SubMap<C>
 where
-    C: Ord + Eq + Clone + Hash,
+    C: Client,
 {
     #[inline]
     pub fn new() -> Self {
@@ -107,8 +108,7 @@ where
         if self.subscribed_topics.contains_key(client) {
             false
         } else {
-            self.subscribed_topics
-                .insert(client.clone(), IndexSet::new());
+            self.subscribed_topics.insert(client.clone(), Set::new());
             true
         }
     }
@@ -167,7 +167,7 @@ where
     }
     pub fn unsubscribe_all(&mut self, client: &C) -> bool {
         if let Some(client_topics) = self.subscribed_topics.get_mut(client) {
-            for topic in client_topics.iter() {
+            for topic in &*client_topics {
                 unsubscribe_rec(
                     &mut self.subscriptions,
                     topic.split(self.separator),
@@ -184,8 +184,8 @@ where
         }
     }
     #[inline]
-    pub fn get_subscribers(&self, topic: &str) -> IndexSet<C> {
-        let mut result = IndexSet::new();
+    pub fn get_subscribers(&self, topic: &str) -> Set<C> {
+        let mut result = Set::new();
         get_subscribers_rec(
             &self.subscriptions,
             topic.split(self.separator),
@@ -211,10 +211,10 @@ fn subscribe_rec<C>(
     subscription: &mut Subscription<C>,
     mut sp: Split<char>,
     client: &C,
-    wildcard: &IndexSet<String>,
-    match_any: &IndexSet<String>,
+    wildcard: &Set<String>,
+    match_any: &Set<String>,
 ) where
-    C: Ord + Eq + Clone + Hash,
+    C: Client,
 {
     if let Some(topic) = sp.next() {
         if wildcard.contains(topic) {
@@ -243,10 +243,10 @@ fn unsubscribe_rec<C>(
     subscription: &mut Subscription<C>,
     mut sp: Split<char>,
     client: &C,
-    wildcard: &IndexSet<String>,
-    match_any: &IndexSet<String>,
+    wildcard: &Set<String>,
+    match_any: &Set<String>,
 ) where
-    C: Ord + Eq + Hash,
+    C: Client,
 {
     if let Some(topic) = sp.next() {
         if wildcard.contains(topic) {
@@ -269,12 +269,9 @@ fn unsubscribe_rec<C>(
     }
 }
 
-fn get_subscribers_rec<C>(
-    subscription: &Subscription<C>,
-    mut sp: Split<char>,
-    result: &mut IndexSet<C>,
-) where
-    C: Ord + Eq + Clone + Hash,
+fn get_subscribers_rec<C>(subscription: &Subscription<C>, mut sp: Split<char>, result: &mut Set<C>)
+where
+    C: Client,
 {
     if let Some(topic) = sp.next() {
         result.extend(subscription.sub_any.clone());
