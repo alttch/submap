@@ -66,7 +66,8 @@ with a single unit "client" to verify various access control lists.
 
 ### Crate features
 
-* **indexmap** switches the engine to *indexmap* (the default is based on
+* **indexmap** switches the engine to
+[indexmap](https://crates.io/crates/indexmap) (the default is based on
 *std::collections::BTreeMap/BTreeSet*), requires Hash trait implemented for map
 clients.
 
