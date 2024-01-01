@@ -1,12 +1,13 @@
-use std::collections::{BTreeMap, BTreeSet};
+use indexmap::{IndexMap, IndexSet};
+use std::hash::Hash;
 use std::str::Split;
 
 #[derive(Debug, Clone)]
 struct Subscription<C> {
-    subscribers: BTreeSet<C>,
-    subtopics: BTreeMap<String, Subscription<C>>,
+    subscribers: IndexSet<C>,
+    subtopics: IndexMap<String, Subscription<C>>,
     subtopics_any: Option<Box<Subscription<C>>>, // ?
-    sub_any: BTreeSet<C>,                        // *
+    sub_any: IndexSet<C>,                        // *
 }
 
 impl<C> Default for Subscription<C> {
@@ -33,11 +34,11 @@ impl<C> Subscription<C> {
 #[derive(Debug, Clone)]
 pub struct SubMap<C> {
     subscriptions: Subscription<C>,
-    subscribed_topics: BTreeMap<C, BTreeSet<String>>,
+    subscribed_topics: IndexMap<C, IndexSet<String>>,
     subscription_count: usize,
     separator: char,
-    match_any: BTreeSet<String>,
-    wildcard: BTreeSet<String>,
+    match_any: IndexSet<String>,
+    wildcard: IndexSet<String>,
 }
 
 impl<C> Default for SubMap<C> {
@@ -55,7 +56,7 @@ impl<C> Default for SubMap<C> {
 
 impl<C> SubMap<C>
 where
-    C: Ord + Eq + Clone,
+    C: Ord + Eq + Clone + Hash,
 {
     #[inline]
     pub fn new() -> Self {
@@ -107,7 +108,7 @@ where
             false
         } else {
             self.subscribed_topics
-                .insert(client.clone(), BTreeSet::new());
+                .insert(client.clone(), IndexSet::new());
             true
         }
     }
@@ -183,8 +184,8 @@ where
         }
     }
     #[inline]
-    pub fn get_subscribers(&self, topic: &str) -> BTreeSet<C> {
-        let mut result = BTreeSet::new();
+    pub fn get_subscribers(&self, topic: &str) -> IndexSet<C> {
+        let mut result = IndexSet::new();
         get_subscribers_rec(
             &self.subscriptions,
             topic.split(self.separator),
@@ -194,7 +195,7 @@ where
     }
     #[inline]
     pub fn is_subscribed(&self, topic: &str) -> bool {
-        is_subscribed_rec(&self.subscriptions, topic.split(self.separator))
+        is_subscribed_rec(&self.subscriptions, &mut topic.split(self.separator))
     }
     #[inline]
     pub fn subscription_count(&self) -> usize {
@@ -210,10 +211,10 @@ fn subscribe_rec<C>(
     subscription: &mut Subscription<C>,
     mut sp: Split<char>,
     client: &C,
-    wildcard: &BTreeSet<String>,
-    match_any: &BTreeSet<String>,
+    wildcard: &IndexSet<String>,
+    match_any: &IndexSet<String>,
 ) where
-    C: Ord + Eq + Clone,
+    C: Ord + Eq + Clone + Hash,
 {
     if let Some(topic) = sp.next() {
         if wildcard.contains(topic) {
@@ -242,10 +243,10 @@ fn unsubscribe_rec<C>(
     subscription: &mut Subscription<C>,
     mut sp: Split<char>,
     client: &C,
-    wildcard: &BTreeSet<String>,
-    match_any: &BTreeSet<String>,
+    wildcard: &IndexSet<String>,
+    match_any: &IndexSet<String>,
 ) where
-    C: Ord + Eq,
+    C: Ord + Eq + Hash,
 {
     if let Some(topic) = sp.next() {
         if wildcard.contains(topic) {
@@ -271,9 +272,9 @@ fn unsubscribe_rec<C>(
 fn get_subscribers_rec<C>(
     subscription: &Subscription<C>,
     mut sp: Split<char>,
-    result: &mut BTreeSet<C>,
+    result: &mut IndexSet<C>,
 ) where
-    C: Ord + Eq + Clone,
+    C: Ord + Eq + Clone + Hash,
 {
     if let Some(topic) = sp.next() {
         result.extend(subscription.sub_any.clone());
@@ -288,7 +289,7 @@ fn get_subscribers_rec<C>(
     }
 }
 
-fn is_subscribed_rec<C>(subscription: &Subscription<C>, mut sp: Split<char>) -> bool
+fn is_subscribed_rec<C>(subscription: &Subscription<C>, sp: &mut Split<char>) -> bool
 where
     C: Ord + Eq + Clone,
 {
@@ -297,7 +298,7 @@ where
             return true;
         }
         if let Some(sub) = subscription.subtopics.get(topic) {
-            if is_subscribed_rec(sub, sp.clone()) {
+            if is_subscribed_rec(sub, sp) {
                 return true;
             }
         }

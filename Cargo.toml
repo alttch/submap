@@ -18,6 +18,7 @@ features = ["digest"]
 [dependencies]
 sha2 = { version = "0.10.1", optional = true }
 openssl = { version = "0.10.42", optional = true }
+indexmap = "2.1.0"
 
 [features]
 digest = ["sha2"]
