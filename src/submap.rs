@@ -195,7 +195,7 @@ where
     }
     #[inline]
     pub fn is_subscribed(&self, topic: &str) -> bool {
-        is_subscribed_rec(&self.subscriptions, &mut topic.split(self.separator))
+        is_subscribed_rec(&self.subscriptions, topic.split(self.separator))
     }
     #[inline]
     pub fn subscription_count(&self) -> usize {
@@ -286,7 +286,7 @@ where
     }
 }
 
-fn is_subscribed_rec<C>(subscription: &Subscription<C>, sp: &mut Split<char>) -> bool
+fn is_subscribed_rec<C>(subscription: &Subscription<C>, mut sp: Split<char>) -> bool
 where
     C: Ord + Eq + Clone,
 {
@@ -295,7 +295,7 @@ where
             return true;
         }
         if let Some(sub) = subscription.subtopics.get(topic) {
-            if is_subscribed_rec(sub, sp) {
+            if is_subscribed_rec(sub, sp.clone()) {
                 return true;
             }
         }
@@ -336,14 +336,14 @@ mod test {
         assert!(smap.subscribe("unit/#", &client4));
         let subs = smap.get_subscribers("unit/tests/test2");
         assert_eq!(subs.len(), 2);
-        assert_eq!(subs.contains(&client2), true);
-        assert_eq!(subs.contains(&client4), true);
+        assert!(subs.contains(&client2));
+        assert!(subs.contains(&client4));
         let subs = smap.get_subscribers("unit/tests");
         assert_eq!(subs.len(), 1);
         assert!(smap.subscribe("#", &client4));
         let subs = smap.get_subscribers("unit");
         assert_eq!(subs.len(), 1);
-        assert_eq!(subs.contains(&client4), true);
+        assert!(subs.contains(&client4));
         assert!(smap.unsubscribe("#", &client4));
         let subs = smap.get_subscribers("unit");
         assert_eq!(subs.len(), 0);
@@ -360,13 +360,13 @@ mod test {
         let subs = smap.get_subscribers("unit/tests");
         assert_eq!(subs.len(), 0);
         let subs = smap.get_subscribers("unit/tests/xxx");
-        assert_eq!(subs.contains(&client1), true);
-        assert_eq!(subs.contains(&client2), true);
+        assert!(subs.contains(&client1));
+        assert!(subs.contains(&client2));
         assert_eq!(subs.len(), 2);
         let subs = smap.get_subscribers("unit/tests/xxx/yyy");
         assert_eq!(subs.len(), 2);
-        assert_eq!(subs.contains(&client1), true);
-        assert_eq!(subs.contains(&client2), true);
+        assert!(subs.contains(&client1));
+        assert!(subs.contains(&client2));
         assert!(smap.subscribe("unit/#", &client1));
         let subs = smap.get_subscribers("unit");
         assert_eq!(subs.len(), 0);
@@ -380,5 +380,17 @@ mod test {
         smap.unregister_client(&client1);
         smap.unregister_client(&client2);
         assert!(smap.subscriptions.is_empty());
+    }
+    #[test]
+    fn test_match_any() {
+        let mut smap: SubMap<String> = SubMap::new().match_any("+").wildcard("#");
+        let client1 = "client1".to_owned();
+        smap.register_client(&client1);
+        assert_eq!(smap.get_subscribers("abc/xxx").len(), 0);
+        smap.subscribe("+/xxx", &client1);
+        assert_eq!(smap.get_subscribers("abc/xxx").len(), 1);
+        assert_eq!(smap.get_subscribers("unix/zzz/xxx/222").len(), 0);
+        smap.subscribe("+/zzz/+/222", &client1);
+        assert_eq!(smap.get_subscribers("unix/zzz/xxx/222").len(), 1);
     }
 }

@@ -182,6 +182,7 @@ where
 mod test {
     use super::BroadcastMap;
     #[test]
+    #[allow(clippy::similar_names)]
     fn test_broadcast() {
         let mut bmap: BroadcastMap<u32> = BroadcastMap::new().separator('/');
         let client1: u32 = 1;
