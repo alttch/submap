@@ -42,6 +42,10 @@ impl AclMap {
         self.smap.subscribe(topic, &());
     }
     #[inline]
+    pub fn remove(&mut self, topic: &str) {
+        self.smap.unsubscribe(topic, &());
+    }
+    #[inline]
     pub fn matches(&self, topic: &str) -> bool {
         self.smap.is_subscribed(topic)
     }
