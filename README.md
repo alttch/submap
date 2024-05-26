@@ -6,7 +6,11 @@ B-tree map for pub/sub services.
 
 ### Usage
 
-```rust,ignore
+```rust
+use submap::SubMap;
+
+type Client = String;
+
 let mut smap: SubMap<Client> = SubMap::new();
 ```
 
@@ -35,7 +39,11 @@ Service symbols can be changed. E.g. let us create a subscription map with
 MQTT-style wildcards (+ for ? and # for \*) but with the dot as the subtopic
 separator:
 
-```rust,ignore
+```rust
+use submap::SubMap;
+
+type Client = String;
+
 let mut smap: SubMap<Client> =
     SubMap::new().separator('.').match_any("+").wildcard("#");
 ```
@@ -44,9 +52,40 @@ Note that "/topic/x", "topic/x" and "topic//x" are 3 different topics. If
 any kind of normalization is required, it should be done manually, before
 calling SubMap functions.
 
+### Formulas
+
+SubMap also supports formulas, which are used both to subscribe to a topic by
+formula or to get a list of clients which match one.
+
+Formulas are non-standard pub/sub functionality and are useful when a client
+want to subscribe to topics which have got e.g. some importance level. Instead
+of subscribing to all level topics, a client can subscribe to one topic with a
+formula:
+
+```rust
+use submap::SubMap;
+
+type Client = String;
+
+let mut smap: SubMap<Client> =
+    SubMap::new().separator('/').match_any("+").wildcard("#").formula_prefix('!');
+let client1 = "client1".to_owned();
+smap.register_client(&client1);
+smap.subscribe("some/!ge(2)/topic", &client1);
+assert_eq!(smap.get_subscribers("some/1/topic").len(), 0);
+assert_eq!(smap.get_subscribers("some/2/topic").len(), 1);
+assert_eq!(smap.get_subscribers("some/3/topic").len(), 1);
+```
+
+See more: [`mkmf::Formula`].
+
 ## Broadcast map
 
-```rust,ignore
+```rust
+use submap::BroadcastMap;
+
+type Client = String;
+
 let mut bmap: BroadcastMap<Client> = BroadcastMap::new();
 ```
 
@@ -57,8 +96,8 @@ Note: the default separator is dot.
 
 ## ACL map
 
-```rust,ignore
-let mut acl_map = AclMap::new();
+```rust
+let mut acl_map = submap::AclMap::new();
 ```
 
 SubMap-based high-speed access control lists checker. Uses SubMap algorithm

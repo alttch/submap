@@ -478,9 +478,10 @@ mod test {
         let client1 = "client1".to_owned();
         smap.register_client(&client1);
         assert_eq!(smap.get_subscribers("1/xxx").len(), 0);
-        smap.subscribe("!gt(1)/xxx", &client1);
+        smap.subscribe("!ge(2)/xxx", &client1);
         assert_eq!(smap.get_subscribers("1/xxx").len(), 0);
         assert_eq!(smap.get_subscribers("2/xxx").len(), 1);
+        assert_eq!(smap.get_subscribers("3/xxx").len(), 1);
         assert_eq!(smap.get_subscribers("unix/zzz/95/222").len(), 0);
         assert_eq!(smap.get_subscribers("unix/zzz/96/222").len(), 0);
         assert_eq!(smap.get_subscribers("unix/zzz/97/222").len(), 0);
