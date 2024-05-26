@@ -15,6 +15,8 @@ pub mod digest;
 #[path = "native_digest.rs"]
 pub mod digest;
 
+pub mod mkmf;
+
 #[cfg(not(feature = "indexmap"))]
 pub mod types {
     use std::collections::{BTreeMap, BTreeSet};
@@ -38,4 +40,10 @@ pub mod types {
     impl<T: Ord + Eq + Clone + Hash> Client for T {}
 
     pub const ENGINE: &str = "indexmap";
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("formula parse: {0}")]
+    FormulaParseError(String),
 }
