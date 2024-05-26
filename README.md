@@ -1,4 +1,11 @@
-# submap
+<h2>
+  submap
+  <a href="https://crates.io/crates/submap"><img alt="crates.io page" src="https://img.shields.io/crates/v/submap.svg"></img></a>
+  <a href="https://docs.rs/submap"><img alt="docs.rs page" src="https://docs.rs/submap/badge.svg"></img></a>
+  <a href="https://github.com/alttch/submap/actions/workflows/ci.yml">
+    <img alt="GitHub Actions CI" src="https://github.com/alttch/submap/actions/workflows/ci.yml/badge.svg"></img>
+  </a>
+</h2>
 
 B-tree map for pub/sub services.
 
