@@ -61,7 +61,7 @@ calling [`SubMap`] functions.
 
 ### Formulas
 
-[`SubMap'] supports formulas, which are used both to subscribe to a topic by
+[`SubMap`] supports formulas, which are used both to subscribe to a topic by
 formula or to get a list of clients which match one.
 
 Formulas are non-standard pub/sub functionality and are useful when a client
