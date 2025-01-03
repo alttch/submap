@@ -35,7 +35,7 @@ client from all the subscribed topics.
 
 ### Separators and wildcards
 
-SubMap supports the following masks:
+[`SubMap`] supports the following masks:
 
 * this/is/a/topic - single topic subscription
 * this/?/a/topic - all topics which match the pattern (2nd chunk - any value)
@@ -57,11 +57,11 @@ let mut smap: SubMap<Client> =
 
 Note that "/topic/x", "topic/x" and "topic//x" are 3 different topics. If
 any kind of normalization is required, it should be done manually, before
-calling SubMap functions.
+calling [`SubMap`] functions.
 
 ### Formulas
 
-SubMap also supports formulas, which are used both to subscribe to a topic by
+[`SubMap'] supports formulas, which are used both to subscribe to a topic by
 formula or to get a list of clients which match one.
 
 Formulas are non-standard pub/sub functionality and are useful when a client
@@ -75,7 +75,7 @@ use submap::SubMap;
 type Client = String;
 
 let mut smap: SubMap<Client> =
-    SubMap::new().separator('/').match_any("+").wildcard("#").formula_prefix('!');
+    SubMap::new().separator('/').match_any("+").wildcard("#").formula_prefix("!");
 let client1 = "client1".to_owned();
 smap.register_client(&client1);
 smap.subscribe("some/!ge(2)/topic", &client1);
@@ -85,6 +85,30 @@ assert_eq!(smap.get_subscribers("some/3/topic").len(), 1);
 ```
 
 See more: [`mkmf::Formula`].
+
+### Regular expressions
+
+[`SubMap`] supports regular expressions in subtopic names.
+
+Regular expressions are non-standard pub/sub functionality, are pretty slow
+(especially for subscribe/unsubscribe operations) and should be used with
+caution. A regular expression can not contain a separator symbol.
+
+```rust
+use submap::SubMap;
+
+type Client = String;
+
+let mut smap: SubMap<Client> =
+    SubMap::new().separator('/').match_any("+").wildcard("#").regex_prefix("~");
+let client1 = "client1".to_owned();
+smap.register_client(&client1);
+smap.subscribe("some/~subtopic[0-9]+/topic", &client1);
+assert_eq!(smap.get_subscribers("some/subtopic1/topic").len(), 1);
+assert_eq!(smap.get_subscribers("some/subtopic2/topic").len(), 1);
+assert_eq!(smap.get_subscribers("some/subtopic333/topic").len(), 1);
+assert_eq!(smap.get_subscribers("some/subtopicx/topic").len(), 0);
+```
 
 ## Broadcast map
 
@@ -125,6 +149,6 @@ use submap::types::ENGINE;
 dbg!(ENGINE); // std-btree or indexmap
 ```
 
-## Cargo crate
+## MSRV
 
-<https://crates.io/crates/submap>
+1.76.0

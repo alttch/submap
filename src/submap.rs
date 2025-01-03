@@ -5,10 +5,17 @@ use crate::mkmf::{Formula, MapKeysMatchFormula as _};
 use crate::types::*;
 
 #[derive(Debug, Clone)]
+struct RegexSubscription<C> {
+    regex: regex::Regex,
+    sub: Subscription<C>,
+}
+
+#[derive(Debug, Clone)]
 struct Subscription<C> {
     subscribers: Set<C>,
     subtopics: Map<String, Subscription<C>>,
     subtopics_by_formula: Map<Formula, Subscription<C>>,
+    subtopics_by_regex: Vec<RegexSubscription<C>>,
     subtopics_any: Option<Box<Subscription<C>>>, // ?
     sub_any: Set<C>,                             // *
 }
@@ -19,6 +26,7 @@ impl<C> Default for Subscription<C> {
             subscribers: <_>::default(),
             subtopics: <_>::default(),
             subtopics_by_formula: <_>::default(),
+            subtopics_by_regex: <_>::default(),
             subtopics_any: None,
             sub_any: <_>::default(),
         }
@@ -30,6 +38,8 @@ impl<C> Subscription<C> {
     fn is_empty(&self) -> bool {
         self.subscribers.is_empty()
             && self.subtopics.is_empty()
+            && self.subtopics_by_formula.is_empty()
+            && self.subtopics_by_regex.is_empty()
             && self.subtopics_any.is_none()
             && self.sub_any.is_empty()
     }
@@ -41,7 +51,8 @@ pub struct SubMap<C> {
     subscribed_topics: Map<C, Set<String>>,
     subscription_count: usize,
     separator: char,
-    formula_prefix: Option<char>,
+    formula_prefix: Option<String>,
+    regex_prefix: Option<String>,
     match_any: Set<String>,
     wildcard: Set<String>,
 }
@@ -54,6 +65,7 @@ impl<C> Default for SubMap<C> {
             subscription_count: 0,
             separator: '/',
             formula_prefix: None,
+            regex_prefix: None,
             match_any: vec!["?".to_owned()].into_iter().collect(),
             wildcard: vec!["*".to_owned()].into_iter().collect(),
         }
@@ -74,8 +86,13 @@ where
         self
     }
     #[inline]
-    pub fn formula_prefix(mut self, prefix: char) -> Self {
-        self.formula_prefix = Some(prefix);
+    pub fn formula_prefix(mut self, prefix: &str) -> Self {
+        self.formula_prefix = Some(prefix.to_owned());
+        self
+    }
+    #[inline]
+    pub fn regex_prefix(mut self, prefix: &str) -> Self {
+        self.regex_prefix = Some(prefix.to_owned());
         self
     }
     #[inline]
@@ -131,7 +148,8 @@ where
                     client,
                     &self.wildcard,
                     &self.match_any,
-                    self.formula_prefix,
+                    self.formula_prefix.as_deref(),
+                    self.regex_prefix.as_deref(),
                 );
                 self.subscription_count -= 1;
             }
@@ -151,7 +169,8 @@ where
                         client,
                         &self.wildcard,
                         &self.match_any,
-                        self.formula_prefix,
+                        self.formula_prefix.as_deref(),
+                        self.regex_prefix.as_deref(),
                     );
                     client_topics.insert(topic.to_owned());
                     self.subscription_count += 1;
@@ -170,7 +189,8 @@ where
                         client,
                         &self.wildcard,
                         &self.match_any,
-                        self.formula_prefix,
+                        self.formula_prefix.as_deref(),
+                        self.regex_prefix.as_deref(),
                     );
                     client_topics.remove(topic);
                     self.subscription_count -= 1;
@@ -187,7 +207,8 @@ where
                     client,
                     &self.wildcard,
                     &self.match_any,
-                    self.formula_prefix,
+                    self.formula_prefix.as_deref(),
+                    self.regex_prefix.as_deref(),
                 );
                 self.subscription_count -= 1;
             }
@@ -203,7 +224,8 @@ where
         get_subscribers_rec(
             &self.subscriptions,
             topic.split(self.separator),
-            self.formula_prefix,
+            self.formula_prefix.as_deref(),
+            self.regex_prefix.as_deref(),
             &mut result,
         );
         result
@@ -212,7 +234,8 @@ where
     pub fn is_subscribed(&self, topic: &str) -> bool {
         is_subscribed_rec(
             &self.subscriptions,
-            self.formula_prefix,
+            self.formula_prefix.as_deref(),
+            self.regex_prefix.as_deref(),
             topic.split(self.separator),
         )
     }
@@ -232,7 +255,8 @@ fn subscribe_rec<C>(
     client: &C,
     wildcard: &Set<String>,
     match_any: &Set<String>,
-    formula_prefix: Option<char>,
+    formula_prefix: Option<&str>,
+    regex_prefix: Option<&str>,
 ) where
     C: Client,
 {
@@ -241,10 +265,26 @@ fn subscribe_rec<C>(
             subscription.sub_any.insert(client.clone());
         } else if match_any.contains(topic) {
             if let Some(ref mut sub) = subscription.subtopics_any {
-                subscribe_rec(sub, sp, client, wildcard, match_any, formula_prefix);
+                subscribe_rec(
+                    sub,
+                    sp,
+                    client,
+                    wildcard,
+                    match_any,
+                    formula_prefix,
+                    regex_prefix,
+                );
             } else {
                 let mut sub = Subscription::default();
-                subscribe_rec(&mut sub, sp, client, wildcard, match_any, formula_prefix);
+                subscribe_rec(
+                    &mut sub,
+                    sp,
+                    client,
+                    wildcard,
+                    match_any,
+                    formula_prefix,
+                    regex_prefix,
+                );
                 subscription.subtopics_any = Some(Box::new(sub));
             }
         } else if let Some(formula) = formula_prefix.and_then(|p| topic.strip_prefix(p)) {
@@ -252,19 +292,83 @@ fn subscribe_rec<C>(
                 return;
             };
             if let Some(sub) = subscription.subtopics_by_formula.get_mut(&formula_parsed) {
-                subscribe_rec(sub, sp, client, wildcard, match_any, formula_prefix);
+                subscribe_rec(
+                    sub,
+                    sp,
+                    client,
+                    wildcard,
+                    match_any,
+                    formula_prefix,
+                    regex_prefix,
+                );
             } else {
                 let mut sub = Subscription::default();
-                subscribe_rec(&mut sub, sp, client, wildcard, match_any, formula_prefix);
+                subscribe_rec(
+                    &mut sub,
+                    sp,
+                    client,
+                    wildcard,
+                    match_any,
+                    formula_prefix,
+                    regex_prefix,
+                );
                 subscription
                     .subtopics_by_formula
                     .insert(formula_parsed, sub);
             }
+        } else if let Some(regex) = regex_prefix.and_then(|p| topic.strip_prefix(p)) {
+            if let Ok(regex) = regex::Regex::new(regex) {
+                let pos = subscription
+                    .subtopics_by_regex
+                    .iter()
+                    .position(|rs| rs.regex.as_str() == regex.as_str());
+                if let Some(pos) = pos {
+                    subscribe_rec(
+                        &mut subscription.subtopics_by_regex[pos].sub,
+                        sp,
+                        client,
+                        wildcard,
+                        match_any,
+                        formula_prefix,
+                        regex_prefix,
+                    );
+                } else {
+                    let mut sub = Subscription::default();
+                    subscribe_rec(
+                        &mut sub,
+                        sp,
+                        client,
+                        wildcard,
+                        match_any,
+                        formula_prefix,
+                        regex_prefix,
+                    );
+                    subscription
+                        .subtopics_by_regex
+                        .push(RegexSubscription { regex, sub });
+                }
+            }
         } else if let Some(sub) = subscription.subtopics.get_mut(topic) {
-            subscribe_rec(sub, sp, client, wildcard, match_any, formula_prefix);
+            subscribe_rec(
+                sub,
+                sp,
+                client,
+                wildcard,
+                match_any,
+                formula_prefix,
+                regex_prefix,
+            );
         } else {
             let mut sub = Subscription::default();
-            subscribe_rec(&mut sub, sp, client, wildcard, match_any, formula_prefix);
+            subscribe_rec(
+                &mut sub,
+                sp,
+                client,
+                wildcard,
+                match_any,
+                formula_prefix,
+                regex_prefix,
+            );
             subscription.subtopics.insert(topic.to_owned(), sub);
         }
     } else {
@@ -278,7 +382,8 @@ fn unsubscribe_rec<C>(
     client: &C,
     wildcard: &Set<String>,
     match_any: &Set<String>,
-    formula_prefix: Option<char>,
+    formula_prefix: Option<&str>,
+    regex_prefix: Option<&str>,
 ) where
     C: Client,
 {
@@ -287,7 +392,15 @@ fn unsubscribe_rec<C>(
             subscription.sub_any.remove(client);
         } else if match_any.contains(topic) {
             if let Some(ref mut sub) = subscription.subtopics_any {
-                unsubscribe_rec(sub, sp, client, wildcard, match_any, formula_prefix);
+                unsubscribe_rec(
+                    sub,
+                    sp,
+                    client,
+                    wildcard,
+                    match_any,
+                    formula_prefix,
+                    regex_prefix,
+                );
                 if sub.is_empty() {
                     subscription.subtopics_any = None;
                 }
@@ -297,13 +410,51 @@ fn unsubscribe_rec<C>(
                 return;
             };
             if let Some(sub) = subscription.subtopics_by_formula.get_mut(&formula_parsed) {
-                unsubscribe_rec(sub, sp, client, wildcard, match_any, formula_prefix);
+                unsubscribe_rec(
+                    sub,
+                    sp,
+                    client,
+                    wildcard,
+                    match_any,
+                    formula_prefix,
+                    regex_prefix,
+                );
                 if sub.is_empty() {
                     subscription.subtopics_by_formula.remove(&formula_parsed);
                 }
             }
+        } else if let Some(regex) = regex_prefix.and_then(|p| topic.strip_prefix(p)) {
+            if let Ok(regex) = regex::Regex::new(regex) {
+                let pos = subscription
+                    .subtopics_by_regex
+                    .iter()
+                    .position(|rs| rs.regex.as_str() == regex.as_str());
+                if let Some(pos) = pos {
+                    let sub = &mut subscription.subtopics_by_regex[pos].sub;
+                    unsubscribe_rec(
+                        sub,
+                        sp,
+                        client,
+                        wildcard,
+                        match_any,
+                        formula_prefix,
+                        regex_prefix,
+                    );
+                    if sub.is_empty() {
+                        subscription.subtopics_by_regex.remove(pos);
+                    }
+                }
+            }
         } else if let Some(sub) = subscription.subtopics.get_mut(topic) {
-            unsubscribe_rec(sub, sp, client, wildcard, match_any, formula_prefix);
+            unsubscribe_rec(
+                sub,
+                sp,
+                client,
+                wildcard,
+                match_any,
+                formula_prefix,
+                regex_prefix,
+            );
             if sub.is_empty() {
                 subscription.subtopics.remove(topic);
             }
@@ -316,7 +467,8 @@ fn unsubscribe_rec<C>(
 fn get_subscribers_rec<C>(
     subscription: &Subscription<C>,
     mut sp: Split<char>,
-    formula_prefix: Option<char>,
+    formula_prefix: Option<&str>,
+    regex_prefix: Option<&str>,
     result: &mut Set<C>,
 ) where
     C: Client,
@@ -325,20 +477,27 @@ fn get_subscribers_rec<C>(
         result.extend(subscription.sub_any.clone());
         if let Some(formula) = formula_prefix.and_then(|p| topic.strip_prefix(p)) {
             for sub in subscription.subtopics.values_match_key_formula(formula) {
-                get_subscribers_rec(sub, sp.clone(), formula_prefix, result);
+                get_subscribers_rec(sub, sp.clone(), formula_prefix, regex_prefix, result);
             }
         } else if let Some(sub) = subscription.subtopics.get(topic) {
-            get_subscribers_rec(sub, sp.clone(), formula_prefix, result);
+            get_subscribers_rec(sub, sp.clone(), formula_prefix, regex_prefix, result);
         }
         if !subscription.subtopics_by_formula.is_empty() {
             for (formula, sub) in &subscription.subtopics_by_formula {
                 if formula.matches(topic) {
-                    get_subscribers_rec(sub, sp.clone(), formula_prefix, result);
+                    get_subscribers_rec(sub, sp.clone(), formula_prefix, regex_prefix, result);
+                }
+            }
+        }
+        if !subscription.subtopics_by_regex.is_empty() {
+            for rs in &subscription.subtopics_by_regex {
+                if rs.regex.is_match(topic) {
+                    get_subscribers_rec(&rs.sub, sp.clone(), formula_prefix, regex_prefix, result);
                 }
             }
         }
         if let Some(ref sub) = subscription.subtopics_any {
-            get_subscribers_rec(sub, sp, formula_prefix, result);
+            get_subscribers_rec(sub, sp, formula_prefix, regex_prefix, result);
         }
     } else {
         result.extend(subscription.subscribers.clone());
@@ -347,7 +506,8 @@ fn get_subscribers_rec<C>(
 
 fn is_subscribed_rec<C>(
     subscription: &Subscription<C>,
-    formula_prefix: Option<char>,
+    formula_prefix: Option<&str>,
+    regex_prefix: Option<&str>,
     mut sp: Split<char>,
 ) -> bool
 where
@@ -359,24 +519,35 @@ where
         }
         if let Some(formula) = formula_prefix.and_then(|p| topic.strip_prefix(p)) {
             for sub in subscription.subtopics.values_match_key_formula(formula) {
-                if is_subscribed_rec(sub, formula_prefix, sp.clone()) {
+                if is_subscribed_rec(sub, formula_prefix, regex_prefix, sp.clone()) {
                     return true;
                 }
             }
         } else if let Some(sub) = subscription.subtopics.get(topic) {
-            if is_subscribed_rec(sub, formula_prefix, sp.clone()) {
+            if is_subscribed_rec(sub, formula_prefix, regex_prefix, sp.clone()) {
                 return true;
             }
         }
         if !subscription.subtopics_by_formula.is_empty() {
             for (formula, sub) in &subscription.subtopics_by_formula {
-                if formula.matches(topic) && is_subscribed_rec(sub, formula_prefix, sp.clone()) {
+                if formula.matches(topic)
+                    && is_subscribed_rec(sub, formula_prefix, regex_prefix, sp.clone())
+                {
+                    return true;
+                }
+            }
+        }
+        if !subscription.subtopics_by_regex.is_empty() {
+            for rs in &subscription.subtopics_by_regex {
+                if rs.regex.is_match(topic)
+                    && is_subscribed_rec(&rs.sub, formula_prefix, regex_prefix, sp.clone())
+                {
                     return true;
                 }
             }
         }
         if let Some(ref sub) = subscription.subtopics_any {
-            if is_subscribed_rec(sub, formula_prefix, sp) {
+            if is_subscribed_rec(sub, formula_prefix, regex_prefix, sp) {
                 return true;
             }
         }
@@ -474,7 +645,7 @@ mod test {
         let mut smap: SubMap<String> = SubMap::new()
             .match_any("+")
             .wildcard("#")
-            .formula_prefix('!');
+            .formula_prefix("!");
         let client1 = "client1".to_owned();
         smap.register_client(&client1);
         assert_eq!(smap.get_subscribers("1/xxx").len(), 0);
@@ -489,5 +660,28 @@ mod test {
         assert_eq!(smap.get_subscribers("unix/zzz/95/222").len(), 0);
         assert_eq!(smap.get_subscribers("unix/zzz/96/222").len(), 1);
         assert_eq!(smap.get_subscribers("unix/zzz/97/222").len(), 1);
+    }
+    #[test]
+    fn test_match_regex() {
+        let mut smap: SubMap<String> = SubMap::new().match_any("+").wildcard("#").regex_prefix("~");
+        let client1 = "client1".to_owned();
+        smap.register_client(&client1);
+        assert_eq!(smap.get_subscribers("test1/xxx").len(), 0);
+        smap.subscribe("~^test\\d+$/xxx", &client1);
+        assert_eq!(smap.get_subscribers("test1/xxx").len(), 1);
+        assert_eq!(smap.get_subscribers("test2/xxx").len(), 1);
+        assert_eq!(smap.get_subscribers("test3333/xxx").len(), 1);
+        assert_eq!(smap.get_subscribers("test3333a/xxx").len(), 0);
+        let client2 = "client2".to_owned();
+        smap.register_client(&client2);
+        smap.subscribe("~^test\\d+$/xxx", &client2);
+        assert_eq!(smap.get_subscribers("test1/xxx").len(), 2);
+        assert_eq!(smap.get_subscribers("test2/xxx").len(), 2);
+        assert_eq!(smap.get_subscribers("test3333/xxx").len(), 2);
+        assert_eq!(smap.get_subscribers("test3333a/xxx").len(), 0);
+        smap.unsubscribe("~^test\\d+$/xxx", &client1);
+        assert_eq!(smap.get_subscribers("test1/xxx").len(), 1);
+        smap.unsubscribe("~^test\\d+$/xxx", &client2);
+        assert_eq!(smap.get_subscribers("test1/xxx").len(), 0);
     }
 }
