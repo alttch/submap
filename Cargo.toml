@@ -1,6 +1,6 @@
 [package]
 name = "submap"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 authors = ["Serhij S. <div@altertech.com>"]
 license = "Apache-2.0"
@@ -20,6 +20,7 @@ sha2 = { version = "0.10.8", optional = true }
 openssl = { version = "0.10.62", optional = true }
 indexmap = { version = "2.1.0", optional = true }
 thiserror = "1.0.61"
+regex = "1.11.1"
 
 [features]
 digest = ["sha2"]
