@@ -92,7 +92,7 @@ See more: [`mkmf::Formula`].
 
 Regular expressions are non-standard pub/sub functionality, are pretty slow
 (especially for subscribe/unsubscribe operations) and should be used with
-caution. A regular expression can not contain a separator symbol.
+caution. A regular expression can not contain the separator symbol.
 
 ```rust
 use submap::SubMap;
