@@ -28,6 +28,16 @@ impl AclMap {
         self
     }
     #[inline]
+    pub fn formula_prefix(mut self, formula_prefix: &str) -> Self {
+        self.smap = self.smap.formula_prefix(formula_prefix);
+        self
+    }
+    #[inline]
+    pub fn regex_prefix(mut self, regex_prefix: &str) -> Self {
+        self.smap = self.smap.regex_prefix(regex_prefix);
+        self
+    }
+    #[inline]
     pub fn wildcard_multiple(mut self, wildcard_multiple: &[&str]) -> Self {
         self.smap = self.smap.wildcard_multiple(wildcard_multiple);
         self
