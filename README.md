@@ -137,9 +137,9 @@ with a single unit "client" to verify various access control lists.
 ### Crate features
 
 * **indexmap** switches the engine to
-[indexmap](https://crates.io/crates/indexmap) (the default is based on
-*std::collections::BTreeMap/BTreeSet*), requires Hash trait implemented for map
-clients.
+  [indexmap](https://crates.io/crates/indexmap) (the default is based on
+  *std::collections::BTreeMap/BTreeSet*), requires Hash trait implemented for map
+  clients.
 
 The current engine can be obtained from
 
@@ -151,4 +151,4 @@ dbg!(ENGINE); // std-btree or indexmap
 
 ## MSRV
 
-1.76.0
+1.81.0
