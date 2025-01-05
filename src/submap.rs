@@ -249,6 +249,7 @@ where
     }
 }
 
+#[allow(clippy::too_many_lines)]
 fn subscribe_rec<C>(
     subscription: &mut Subscription<C>,
     mut sp: Split<char>,
@@ -479,6 +480,14 @@ fn get_subscribers_rec<C>(
             for sub in subscription.subtopics.values_match_key_formula(formula) {
                 get_subscribers_rec(sub, sp.clone(), formula_prefix, regex_prefix, result);
             }
+        } else if let Some(regex) = regex_prefix.and_then(|p| topic.strip_prefix(p)) {
+            if let Ok(regex) = regex::Regex::new(regex) {
+                for (name, sub) in &subscription.subtopics {
+                    if regex.is_match(name) {
+                        get_subscribers_rec(sub, sp.clone(), formula_prefix, regex_prefix, result);
+                    }
+                }
+            }
         } else if let Some(sub) = subscription.subtopics.get(topic) {
             get_subscribers_rec(sub, sp.clone(), formula_prefix, regex_prefix, result);
         }
@@ -521,6 +530,16 @@ where
             for sub in subscription.subtopics.values_match_key_formula(formula) {
                 if is_subscribed_rec(sub, formula_prefix, regex_prefix, sp.clone()) {
                     return true;
+                }
+            }
+        } else if let Some(regex) = regex_prefix.and_then(|p| topic.strip_prefix(p)) {
+            if let Ok(regex) = regex::Regex::new(regex) {
+                for (name, sub) in &subscription.subtopics {
+                    if regex.is_match(name)
+                        && is_subscribed_rec(sub, formula_prefix, regex_prefix, sp.clone())
+                    {
+                        return true;
+                    }
                 }
             }
         } else if let Some(sub) = subscription.subtopics.get(topic) {
