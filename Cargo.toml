@@ -26,3 +26,4 @@ regex = "1.11.1"
 digest = ["dep:sha2"]
 native-digest = ["dep:openssl"]
 openssl-vendored = ["openssl/vendored"]
+indexmap = ["dep:indexmap"]
