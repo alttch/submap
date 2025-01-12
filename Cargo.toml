@@ -1,6 +1,6 @@
 [package]
 name = "submap"
-version = "0.3.3"
+version = "0.3.4"
 edition = "2021"
 authors = ["Serhij S. <div@altertech.com>"]
 license = "Apache-2.0"
@@ -23,6 +23,6 @@ thiserror = "1.0.61"
 regex = "1.11.1"
 
 [features]
-digest = ["sha2"]
-native-digest = ["openssl"]
+digest = ["dep:sha2"]
+native-digest = ["dep:openssl"]
 openssl-vendored = ["openssl/vendored"]
