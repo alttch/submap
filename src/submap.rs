@@ -185,7 +185,7 @@ where
                 if client_topics.contains(topic) {
                     unsubscribe_rec(
                         &mut self.subscriptions,
-                        topic.split('/'),
+                        topic.split(self.separator),
                         client,
                         &self.wildcard,
                         &self.match_any,
