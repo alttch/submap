@@ -23,8 +23,8 @@ pub mod types {
 
     pub type Set<V> = BTreeSet<V>;
     pub type Map<K, V> = BTreeMap<K, V>;
-    pub trait Client: Ord + Eq + Clone {}
-    impl<T: Ord + Eq + Clone> Client for T {}
+    pub trait Client: Ord + Clone {}
+    impl<T: Ord + Clone> Client for T {}
 
     pub const ENGINE: &str = "std-btree";
 }
@@ -36,8 +36,8 @@ pub mod types {
 
     pub type Set<V> = IndexSet<V>;
     pub type Map<K, V> = IndexMap<K, V>;
-    pub trait Client: Ord + Eq + Clone + Hash {}
-    impl<T: Ord + Eq + Clone + Hash> Client for T {}
+    pub trait Client: Ord + Clone + Hash {}
+    impl<T: Ord + Clone + Hash> Client for T {}
 
     pub const ENGINE: &str = "indexmap";
 }
