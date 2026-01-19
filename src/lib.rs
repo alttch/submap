@@ -8,11 +8,11 @@ pub use crate::broadcastmap::BroadcastMap;
 mod aclmap;
 pub use crate::aclmap::AclMap;
 
-#[cfg(feature = "digest")]
-pub mod digest;
-
 #[cfg(feature = "native-digest")]
 #[path = "native_digest.rs"]
+pub mod digest;
+
+#[cfg(all(feature = "digest", not(feature = "native-digest")))]
 pub mod digest;
 
 pub mod mkmf;
